@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
-    "errors"
 	"net/http"
+    "encoding/hex"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -33,53 +33,16 @@ func Protected(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Fprint(w, "Protected!\n")
 }
 
-
-func setCookieHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-    // Initialize a new cookie containing the string "Hello world!" and some
-    // non-default attributes.
-    cookie := http.Cookie{
-        Name:     "exampleCookie",
-        Value:    "Hola!",
-        Path:     "/",
-        MaxAge:   3600,
-        HttpOnly: true,
-        Secure:   true,
-        SameSite: http.SameSiteLaxMode,
-    }
-
-    // Use the http.SetCookie() function to send the cookie to the client.
-    // Behind the scenes this adds a `Set-Cookie` header to the response
-    // containing the necessary cookie data.
-    http.SetCookie(w, &cookie)
-
-    // Write a HTTP response as normal.
-    w.Write([]byte("cookie set!"))
-}
-
-func getCookieHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-    // Retrieve the cookie from the request using its name (which in our case is
-    // "exampleCookie"). If no matching cookie is found, this will return a
-    // http.ErrNoCookie error. We check for this, and return a 400 Bad Request
-    // response to the client.
-    cookie, err := r.Cookie("exampleCookie")
-    if err != nil {
-        switch {
-        case errors.Is(err, http.ErrNoCookie):
-            http.Error(w, "cookie not found", http.StatusBadRequest)
-        default:
-            log.Println(err)
-            http.Error(w, "server error", http.StatusInternalServerError)
-        }
-        return
-    }
-
-    // Echo out the cookie value in the response body.
-    w.Write([]byte(cookie.Value))
-}
+var secretKey []byte
 
 func main() {
 	user := "gordon"
 	pass := "secret!"
+	var err error
+	secretKey, err = hex.DecodeString("13d6b4dff8f84a10851021ec8608f814570d562c92fe6b5ec4c9f595bcb3234b")
+    if err != nil {
+        log.Fatal(err)
+    }
 
 	router := httprouter.New()
 	router.GET("/", Index)
